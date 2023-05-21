@@ -1,3 +1,5 @@
+import { MyPromise1Type } from './type'
+
 let PENDING = 'PENDING'
 let FULFILLED = 'FULFILLED'
 let REJECTED = 'REJECTED'
@@ -57,34 +59,67 @@ export class MyPromise {
   }
 }
 
-const promise = new MyPromise((resolve: any, reject: any) => {
-  setTimeout(() => {
-    resolve('成功')
-  }, 0)
-}).then((value: any) => {
-  console.log('success', value)
-})
+// const promise = new MyPromise((resolve: any, reject: any) => {
+//   setTimeout(() => {
+//     resolve('成功')
+//   }, 0)
+// }).then((value: any) => {
+//   console.log('success', value)
+// })
 
 // ------------------------------------------------------------------------------------
 
 // 较完整版本
-export class MyPromise1 {
+export class MyPromise1 implements MyPromise1Type<any> {
   private status = PENDING
-  private value = undefined
-  private reason = undefined
+  private value: any = undefined
+  private reason: any = undefined
   private onResolveCallback: any[] = []
   private onRejectCallback: any[] = []
 
-  private resolve(_value: any) {
-    this.value = _value
-    this.status = FULFILLED
-    this.onResolveCallback.forEach((fn) => fn())
+  // Promise.resolve 方法
+  static resolve(data: any) {
+    return new MyPromise1((resolve: any, reject: any) => {
+      resolve(data)
+    })
   }
 
-  private reject(_reason: any) {
-    this.reason = _reason
-    this.status = REJECTED
-    this.onRejectCallback.forEach((fn) => fn())
+  // Promise.reject 方法
+  static reject(data: any) {
+    return new MyPromise1((resolve: any, reject: any) => {
+      reject(data)
+    })
+  }
+
+  // Promise.all 方法
+  static all(promises: any[]) {
+    return new MyPromise1((resolve: any, reject: any) => {})
+  }
+
+  // Promise.catch 方法
+  catch(onRejected: any) {
+    return this.then(null, onRejected)
+  }
+
+  private resolve = (_value: any) => {
+    // 如果 value 是一个 Promise，递归执行
+    if (_value instanceof MyPromise1) {
+      return _value.then(this.resolve, this.reject)
+    }
+
+    if (this.status === PENDING) {
+      this.status = FULFILLED
+      this.value = _value
+      this.onResolveCallback.forEach((fn) => fn())
+    }
+  }
+
+  private reject = (_reason: any) => {
+    if (this.status === PENDING) {
+      this.status = REJECTED
+      this.reason = _reason
+      this.onRejectCallback.forEach((fn) => fn())
+    }
   }
 
   then(onFulfilled?: any, onRejected?: any) {
@@ -92,7 +127,11 @@ export class MyPromise1 {
     onFulfilled =
       typeof onFulfilled === 'function' ? onFulfilled : (args: any) => args
     onRejected =
-      typeof onRejected === 'function' ? onRejected : (args: any) => args
+      typeof onRejected === 'function'
+        ? onRejected
+        : (err: any) => {
+            throw err
+          }
 
     let p = new Promise((resolve, reject) => {
       if (this.status === FULFILLED) {
@@ -101,6 +140,7 @@ export class MyPromise1 {
           try {
             // 执行成功回调，并将返回值传入 resolvePromise 进行解析
             let x = onFulfilled(this.value)
+            // 传给 resolvePromise 也是处理了新的 Promise 的 then 的值穿透问题
             resolvePromise(p, x, resolve, reject)
           } catch (e) {
             reject(e)
@@ -109,7 +149,7 @@ export class MyPromise1 {
       } else if (this.status === REJECTED) {
         setTimeout(() => {
           try {
-            let x = onRejected(this.value)
+            let x = onRejected(this.reason)
             resolvePromise(p, x, resolve, reject)
           } catch (e) {
             reject(e)
@@ -130,7 +170,7 @@ export class MyPromise1 {
         this.onRejectCallback.push(() => {
           setTimeout(() => {
             try {
-              let x = onRejected(this.value)
+              let x = onRejected(this.reason)
               resolvePromise(p, x, resolve, reject)
             } catch (e) {
               reject(e)
@@ -194,3 +234,31 @@ function resolvePromise(promise2: any, x: any, resolve: any, reject: any) {
     }
   }
 }
+
+const promise = new MyPromise1((resolve: any, reject: any) => {
+  reject('失败')
+})
+  .then()
+  .then()
+  .then(
+    (data) => {
+      console.log(data)
+    },
+    (err) => {
+      console.log('err', err)
+    }
+  )
+
+MyPromise1.resolve(
+  new MyPromise1((resolve: any, reject: any) => {
+    setTimeout(() => {
+      resolve('ok')
+    }, 3000)
+  })
+)
+  .then((data: any) => {
+    console.log(data, 'success')
+  })
+  .catch((err) => {
+    console.log(err, 'error')
+  })
