@@ -93,7 +93,42 @@ export class MyPromise1 implements MyPromise1Type<any> {
 
   // Promise.all 方法
   static all(promises: any[]) {
-    return new MyPromise1((resolve: any, reject: any) => {})
+    return new MyPromise1((resolve: any, reject: any) => {
+      let resArr: any[] = []
+      let orderIndex = 0
+
+      const processResultByKey = (value: any, index: number) => {
+        resArr[index] = value
+        if (++orderIndex >= promises.length) {
+          resolve(resArr)
+        }
+      }
+
+      for (let i = 0; i < promises.length; i++) {
+        let value = promises[i]
+        if (value && typeof value.then === 'function') {
+          value.then((value: any) => {
+            processResultByKey(value, i)
+          })
+        } else {
+          processResultByKey(value, i)
+        }
+      }
+    })
+  }
+
+  // Promise.race 方法
+  static race(promises: any[]) {
+    return new MyPromise1((resolve: any, reject: any) => {
+      for (let i = 0; i < promises.length; i++) {
+        let val = promises[i]
+        if (val && typeof val.then === 'function') {
+          val.then(resolve, reject)
+        } else {
+          resolve(val)
+        }
+      }
+    })
   }
 
   // Promise.catch 方法
