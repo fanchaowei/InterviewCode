@@ -1,4 +1,4 @@
-import { MyPromise1Type } from './type'
+/// <reference path="type.d.ts" />
 
 let PENDING = 'PENDING'
 let FULFILLED = 'FULFILLED'
