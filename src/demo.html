@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>demo</title>
+</head>
+
+<body>
+
+</body>
+<script>
+  const obj = {
+    a: 1,
+    b: 2,
+    c: 3
+  }
+  console.log('keys', Object.keys(obj))
+  console.log('values', Object.values(obj))
+  console.log('entries', Object.entries(obj))
+
+  const xhr = new XMLHttpRequest()
+  // 设置回调函数
+  xhr.onreadystatechange = function () {
+    // readyState 代表当前的状态
+    // 0: 未初始化，open() 方法还没调用
+    // 1: 已打开，open() 方法已调用，send() 方法未调用
+    // 2：已发送，send() 方法已调用，但服务器还未接收到请求
+    // 3: 接受中，服务器正在处理请求并返回部分数据
+    // 4: 完成，服务器返回完成请求并所有数据
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        // 请求成功
+      } else {
+        // 请求失败
+      }
+    }
+  }
+
+  // 打开连接
+  xhr.open('get', '', true)
+  // 发送请求
+  xhr.send()
+
+  fetch('').then((response) => {
+    if (response.ok) {
+      return response.json
+    } else {
+      throw new Error('')
+    }
+  }).then(data => {
+    // 处理服务器返回的数据
+  }).catch((err) => {
+    // 处理错误情况
+  })
+
+
+
+</script>
+
+</html>
